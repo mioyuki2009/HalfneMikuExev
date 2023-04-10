@@ -11,9 +11,10 @@ project "HalfneMikuExev"
    local WINDOWSBACKENDSPATH = IMGUIPATH.."/backends/imgui_impl_win32.*"
    local DX12BACKENDSPATH = IMGUIPATH.."/backends/imgui_impl_dx12.*"
 
-   files { IMGUIPATH.."/imgui*.h", IMGUIPATH.."/imgui*.cpp", WINDOWSBACKENDSPATH, DX12BACKENDSPATH ,SOURCEPATH.."/main.cpp"}
+   files { IMGUIPATH.."/imgui*.h", IMGUIPATH.."/imgui*.cpp", 
+           WINDOWSBACKENDSPATH, DX12BACKENDSPATH ,SOURCEPATH.."/*",SOURCEPATH.."/*/*"}
 
-   includedirs {IMGUIPATH, IMGUIPATH.."/backends"}
+   includedirs {SOURCEPATH, IMGUIPATH, IMGUIPATH.."/backends"}
    
    links {"d3d12", "dxgi"}
 
