@@ -1,6 +1,6 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
-#include "assets/GraphImpl.h"
+#include "Assets/GraphImpl.h"
 struct FrameContext
 {
     ID3D12CommandAllocator* CommandAllocator;
@@ -13,5 +13,12 @@ class MDx12 : public GraphImpl
 public:
 	virtual ~MDx12();
 
+public:
+	virtual bool RegisterImGui(MImGui* pImGui) override final;
+
+protected:
+	virtual void Init() override final;
+	virtual void Release() override final;
+	virtual bool Vaild() override final;
 
 };
