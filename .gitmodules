@@ -2,3 +2,6 @@
 	path = vendor/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "vendor/nanosvg"]
+	path = vendor/nanosvg
+	url = https://github.com/memononen/nanosvg.git

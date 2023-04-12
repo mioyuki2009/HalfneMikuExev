@@ -19,6 +19,7 @@ project "HalfneMikuExev"
    local GRAPHBACKEND = GRAPHBACKENDARRAY.dx11;
    local SOURCEPATH = "source"
    local IMGUIPATH = "vendor/imgui"
+   local NANOSVGPATH = "vendor/nanosvg/src"
    local WINDOWSBACKENDSPATH = ""
    local GRAPHBACKENDSPATH = ""
    if has_value(_ARGS, "-dx12")
@@ -34,10 +35,11 @@ project "HalfneMikuExev"
    end
    files { IMGUIPATH.."/imgui*.h", IMGUIPATH.."/imgui*.cpp", 
            WINDOWSBACKENDSPATH, GRAPHBACKENDSPATH ,
+           NANOSVGPATH.."nanosvg.h",
            SOURCEPATH.."/*",SOURCEPATH.."/*/*"}
 
 
-   includedirs {SOURCEPATH, IMGUIPATH, IMGUIPATH.."/backends"}
+   includedirs {SOURCEPATH, IMGUIPATH, IMGUIPATH.."/backends", NANOSVGPATH}
    
    
 

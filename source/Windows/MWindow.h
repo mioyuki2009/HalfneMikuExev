@@ -14,11 +14,10 @@ public:
 public:
 	void Show();
 	const HWND& GetHwnd() { return hwnd; }
-	void Run();
+	bool Run();
+	void Release();
 protected:
 	void Init();
-	void Release();
-
 private:
 	WNDCLASSEXW wc;
 	HWND hwnd = nullptr;

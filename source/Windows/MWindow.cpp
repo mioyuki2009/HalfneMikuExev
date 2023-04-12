@@ -1,10 +1,8 @@
 #include "MWindow.h"
-#include "imgui.h"
+#include "Layout/MImGui.h"
+#include "Assets/GraphImpl.h"
 
 std::shared_ptr<MWindows> GWindow = nullptr;
-
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 
 void MWindows::Show()
 {
@@ -13,6 +11,35 @@ void MWindows::Show()
     ::UpdateWindow(hwnd);
 }
 
+bool MWindows::Run()
+{
+    const auto& ImGui = MImGui::Get();
+    bool done = false;
+    while (!done)
+    {
+        // Poll and handle messages (inputs, window resize, etc.)
+        // See the WndProc() function below for our to dispatch events to the Win32 backend.
+        MSG msg;
+        while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+        {
+            ::TranslateMessage(&msg);
+            ::DispatchMessage(&msg);
+            if (msg.message == WM_QUIT)
+                done = true;
+        }
+        if (done)
+            break;
+
+        // Start the Dear ImGui frame
+        ImGui->StartNewFrame();
+
+        ImGui->DrawDefaultLayout();
+
+        ImGui->Render();
+    }
+
+    return true;
+}
 
 MWindows::MWindows()
 {
@@ -22,30 +49,39 @@ MWindows::MWindows()
 
 MWindows::~MWindows()
 {
-    Release();
+    //Release();
 }
 
 void MWindows::Init()
 {
     wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"ImGui Example", NULL };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX12 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+    hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX12 Example", WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, NULL, NULL, wc.hInstance, NULL);
+    
+    GraphImpl::Get(hwnd);
+    MImGui::Get(hwnd);
 }
 
 void MWindows::Release()
 {
+    GraphImpl::Get()->Release();
+    MImGui::Get()->Release();
+    if (hwnd)
+    {
+        ::DestroyWindow(hwnd);
+    }
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 }
 
 std::shared_ptr<MWindows>& MWindows::Get()
 {
 	if (!GWindow) {
-		GWindow = std::make_shared<MWindows>();
+		GWindow = std::shared_ptr<MWindows>(new MWindows());
 	}
 	return GWindow;
 }
 
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT WINAPI MWindows::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
@@ -53,13 +89,9 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg)
     {
     case WM_SIZE:
-        if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)
+        if (wParam != SIZE_MINIMIZED)
         {
-            WaitForLastSubmittedFrame();
-            CleanupRenderTarget();
-            HRESULT result = g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT);
-            assert(SUCCEEDED(result) && "Failed to resize swapchain.");
-            CreateRenderTarget();
+            GraphImpl::Get()->Resize((int)LOWORD(lParam), (int)HIWORD(lParam));
         }
         return 0;
     case WM_SYSCOMMAND:
@@ -71,20 +103,4 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     }
     return ::DefWindowProcW(hWnd, msg, wParam, lParam);
-}
-
-void WaitForLastSubmittedFrame()
-{
-    FrameContext* frameCtx = &g_frameContext[g_frameIndex % NUM_FRAMES_IN_FLIGHT];
-
-    UINT64 fenceValue = frameCtx->FenceValue;
-    if (fenceValue == 0)
-        return; // No fence was signaled
-
-    frameCtx->FenceValue = 0;
-    if (g_fence->GetCompletedValue() >= fenceValue)
-        return;
-
-    g_fence->SetEventOnCompletion(fenceValue, g_fenceEvent);
-    WaitForSingleObject(g_fenceEvent, INFINITE);
 }
