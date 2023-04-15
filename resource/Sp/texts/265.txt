@@ -1,0 +1,5 @@
+Also important: mouse movement 
+--- RECORDSEPARATOR ---
+will not be recorded unless the left 
+--- RECORDSEPARATOR ---
+mouse button is held down.

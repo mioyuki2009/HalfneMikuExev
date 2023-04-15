@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" height="10.0px" width="200.0px" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)">
+    <path d="M199.0 9.0 L199.0 1.0 1.0 1.0 1.0 9.0 199.0 9.0 M200.0 10.0 L0.0 10.0 0.0 0.0 200.0 0.0 200.0 10.0" fill="#ffffff" fill-rule="evenodd" stroke="none"/>
+    <path d="M199.0 9.0 L1.0 9.0 1.0 1.0 199.0 1.0 199.0 9.0" fill="#000000" fill-rule="evenodd" stroke="none"/>
+  </g>
+</svg>

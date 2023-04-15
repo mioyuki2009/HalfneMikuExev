@@ -1,0 +1,3 @@
+Press       to load up a song.
+--- RECORDSEPARATOR ---
+Press       to save (and       to load) a dance.

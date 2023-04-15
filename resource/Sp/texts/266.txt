@@ -1,0 +1,9 @@
+You can adjust cues with a mouse drag, 
+--- RECORDSEPARATOR ---
+and if the cursor is over them you can 
+--- RECORDSEPARATOR ---
+remove them with the delete/backspace 
+--- RECORDSEPARATOR ---
+key, or correct it with another cue's 
+--- RECORDSEPARATOR ---
+keypress.
