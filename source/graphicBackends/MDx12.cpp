@@ -9,16 +9,16 @@ FrameContext                 g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
 UINT                         g_frameIndex = 0;
 
 int const                    NUM_BACK_BUFFERS = 3;
-ID3D12Device* g_pd3dDevice = NULL;
-ID3D12DescriptorHeap* g_pd3dRtvDescHeap = NULL;
-ID3D12DescriptorHeap* g_pd3dSrvDescHeap = NULL;
-ID3D12CommandQueue* g_pd3dCommandQueue = NULL;
-ID3D12GraphicsCommandList* g_pd3dCommandList = NULL;
-ID3D12Fence* g_fence = NULL;
-HANDLE                       g_fenceEvent = NULL;
+ID3D12Device* g_pd3dDevice = nullptr;
+ID3D12DescriptorHeap* g_pd3dRtvDescHeap = nullptr;
+ID3D12DescriptorHeap* g_pd3dSrvDescHeap = nullptr;
+ID3D12CommandQueue* g_pd3dCommandQueue = nullptr;
+ID3D12GraphicsCommandList* g_pd3dCommandList = nullptr;
+ID3D12Fence* g_fence = nullptr;
+HANDLE                       g_fenceEvent = nullptr;
 UINT64                       g_fenceLastSignaledValue = 0;
-IDXGISwapChain3* g_pSwapChain = NULL;
-HANDLE                       g_hSwapChainWaitableObject = NULL;
+IDXGISwapChain3* g_pSwapChain = nullptr;
+HANDLE                       g_hSwapChainWaitableObject = nullptr;
 ID3D12Resource* g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
 D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
 
@@ -49,7 +49,7 @@ void MDx12::Release()
 
 void MDx12::Resize(int width, int height)
 {
-    if (g_pd3dDevice != NULL)
+    if (g_pd3dDevice != nullptr)
     {
         WaitForLastSubmittedFrame();
         CleanupRenderTarget();
@@ -97,14 +97,14 @@ void MDx12::RenderImGui(MImGui* pImGui)
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    g_pd3dCommandList->Reset(frameCtx->CommandAllocator, NULL);
+    g_pd3dCommandList->Reset(frameCtx->CommandAllocator, nullptr);
     g_pd3dCommandList->ResourceBarrier(1, &barrier);
 
     // Render Dear ImGui graphics
     const auto& clear_color = pImGui->GetClearColor();
     const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-    g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, NULL);
-    g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
+    g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
+    g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
     g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), g_pd3dCommandList);
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -119,7 +119,7 @@ void MDx12::RenderImGui(MImGui* pImGui)
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(NULL, (void*)g_pd3dCommandList);
+        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)g_pd3dCommandList);
     }
 
     g_pSwapChain->Present(1, 0); // Present with vsync
@@ -153,21 +153,21 @@ bool MDx12::CreateDeviceD3D(const HWND& hwnd)
 
     // [DEBUG] Enable debug interface
 #ifdef DX12_ENABLE_DEBUG_LAYER
-    ID3D12Debug* pdx12Debug = NULL;
+    ID3D12Debug* pdx12Debug = nullptr;
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&pdx12Debug))))
         pdx12Debug->EnableDebugLayer();
 #endif
 
     // Create device
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
-    if (D3D12CreateDevice(NULL, featureLevel, IID_PPV_ARGS(&g_pd3dDevice)) != S_OK)
+    if (D3D12CreateDevice(nullptr, featureLevel, IID_PPV_ARGS(&g_pd3dDevice)) != S_OK)
         return false;
 
     // [DEBUG] Setup debug interface to break on any warnings/errors
 #ifdef DX12_ENABLE_DEBUG_LAYER
-    if (pdx12Debug != NULL)
+    if (pdx12Debug != nullptr)
     {
-        ID3D12InfoQueue* pInfoQueue = NULL;
+        ID3D12InfoQueue* pInfoQueue = nullptr;
         g_pd3dDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue));
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
@@ -217,23 +217,23 @@ bool MDx12::CreateDeviceD3D(const HWND& hwnd)
         if (g_pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&g_frameContext[i].CommandAllocator)) != S_OK)
             return false;
 
-    if (g_pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_frameContext[0].CommandAllocator, NULL, IID_PPV_ARGS(&g_pd3dCommandList)) != S_OK ||
+    if (g_pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, g_frameContext[0].CommandAllocator, nullptr, IID_PPV_ARGS(&g_pd3dCommandList)) != S_OK ||
         g_pd3dCommandList->Close() != S_OK)
         return false;
 
     if (g_pd3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&g_fence)) != S_OK)
         return false;
 
-    g_fenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (g_fenceEvent == NULL)
+    g_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (g_fenceEvent == nullptr)
         return false;
 
     {
-        IDXGIFactory4* dxgiFactory = NULL;
-        IDXGISwapChain1* swapChain1 = NULL;
+        IDXGIFactory4* dxgiFactory = nullptr;
+        IDXGISwapChain1* swapChain1 = nullptr;
         if (CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)) != S_OK)
             return false;
-        if (dxgiFactory->CreateSwapChainForHwnd(g_pd3dCommandQueue, hwnd, &sd, NULL, NULL, &swapChain1) != S_OK)
+        if (dxgiFactory->CreateSwapChainForHwnd(g_pd3dCommandQueue, hwnd, &sd, nullptr, nullptr, &swapChain1) != S_OK)
             return false;
         if (swapChain1->QueryInterface(IID_PPV_ARGS(&g_pSwapChain)) != S_OK)
             return false;
@@ -249,21 +249,21 @@ bool MDx12::CreateDeviceD3D(const HWND& hwnd)
 void MDx12::CleanupDeviceD3D()
 {
     CleanupRenderTarget();
-    if (g_pSwapChain) { g_pSwapChain->SetFullscreenState(false, NULL); g_pSwapChain->Release(); g_pSwapChain = NULL; }
-    if (g_hSwapChainWaitableObject != NULL) { CloseHandle(g_hSwapChainWaitableObject); }
+    if (g_pSwapChain) { g_pSwapChain->SetFullscreenState(false, nullptr); g_pSwapChain->Release(); g_pSwapChain = nullptr; }
+    if (g_hSwapChainWaitableObject != nullptr) { CloseHandle(g_hSwapChainWaitableObject); }
     for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
-        if (g_frameContext[i].CommandAllocator) { g_frameContext[i].CommandAllocator->Release(); g_frameContext[i].CommandAllocator = NULL; }
+        if (g_frameContext[i].CommandAllocator) { g_frameContext[i].CommandAllocator->Release(); g_frameContext[i].CommandAllocator = nullptr; }
     }
-    if (g_pd3dCommandQueue) { g_pd3dCommandQueue->Release(); g_pd3dCommandQueue = NULL; }
-    if (g_pd3dCommandList) { g_pd3dCommandList->Release(); g_pd3dCommandList = NULL; }
-    if (g_pd3dRtvDescHeap) { g_pd3dRtvDescHeap->Release(); g_pd3dRtvDescHeap = NULL; }
-    if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = NULL; }
-    if (g_fence) { g_fence->Release(); g_fence = NULL; }
-    if (g_fenceEvent) { CloseHandle(g_fenceEvent); g_fenceEvent = NULL; }
-    if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
+    if (g_pd3dCommandQueue) { g_pd3dCommandQueue->Release(); g_pd3dCommandQueue = nullptr; }
+    if (g_pd3dCommandList) { g_pd3dCommandList->Release(); g_pd3dCommandList = nullptr; }
+    if (g_pd3dRtvDescHeap) { g_pd3dRtvDescHeap->Release(); g_pd3dRtvDescHeap = nullptr; }
+    if (g_pd3dSrvDescHeap) { g_pd3dSrvDescHeap->Release(); g_pd3dSrvDescHeap = nullptr; }
+    if (g_fence) { g_fence->Release(); g_fence = nullptr; }
+    if (g_fenceEvent) { CloseHandle(g_fenceEvent); g_fenceEvent = nullptr; }
+    if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
 
 #ifdef DX12_ENABLE_DEBUG_LAYER
-    IDXGIDebug1* pDebug = NULL;
+    IDXGIDebug1* pDebug = nullptr;
     if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&pDebug))))
     {
         pDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_SUMMARY);
@@ -276,9 +276,9 @@ void MDx12::CreateRenderTarget()
 {
     for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
     {
-        ID3D12Resource* pBackBuffer = NULL;
+        ID3D12Resource* pBackBuffer = nullptr;
         g_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer));
-        g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, g_mainRenderTargetDescriptor[i]);
+        g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, g_mainRenderTargetDescriptor[i]);
         g_mainRenderTargetResource[i] = pBackBuffer;
     }
 }
@@ -288,7 +288,17 @@ void MDx12::CleanupRenderTarget()
     WaitForLastSubmittedFrame();
 
     for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
-        if (g_mainRenderTargetResource[i]) { g_mainRenderTargetResource[i]->Release(); g_mainRenderTargetResource[i] = NULL; }
+        if (g_mainRenderTargetResource[i]) { g_mainRenderTargetResource[i]->Release(); g_mainRenderTargetResource[i] = nullptr; }
+}
+
+ID3D12Device* MDx12::GetDevice()
+{
+    return g_pd3dDevice;
+}
+
+ID3D12GraphicsCommandList* GetCommandList()
+{
+    return g_pd3dCommandList;
 }
 
 void WaitForLastSubmittedFrame()
@@ -312,7 +322,7 @@ FrameContext* WaitForNextFrameResources()
     UINT nextFrameIndex = g_frameIndex + 1;
     g_frameIndex = nextFrameIndex;
 
-    HANDLE waitableObjects[] = { g_hSwapChainWaitableObject, NULL };
+    HANDLE waitableObjects[] = { g_hSwapChainWaitableObject, nullptr };
     DWORD numWaitableObjects = 1;
 
     FrameContext* frameCtx = &g_frameContext[nextFrameIndex % NUM_FRAMES_IN_FLIGHT];

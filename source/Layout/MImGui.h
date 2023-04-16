@@ -24,7 +24,7 @@ protected:
 	void Init(const HWND& hwnd);
 
 private:
-	ImVec4 clear_color = {0.45f, 0.55f, 0.60f, 1.00f};
+	ImVec4 clear_color = {0.00f, 0.00f, 0.00f, 1.00f};
 };
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -1,3 +1,4 @@
+#pragma once
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include "Assets/GraphImpl.h"
@@ -22,6 +23,9 @@ public:
 	virtual void Release() override final;
 
 	virtual void Resize(int width, int height) override final;
+public:
+	ID3D12Device* GetDevice();
+	ID3D12GraphicsCommandList* GetCommandList();
 protected:
 	virtual void Init(const HWND& hwnd) override final;
 	virtual bool Vaild() override final;

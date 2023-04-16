@@ -22,6 +22,7 @@ project "HalfneMikuExev"
    local NANOSVGPATH = "vendor/nanosvg/src"
    local WINDOWSBACKENDSPATH = ""
    local GRAPHBACKENDSPATH = ""
+   local GRAPHEXPANDPATH = ""
    if has_value(_ARGS, "-dx12")
    then  
       GRAPHBACKEND = GRAPHBACKENDARRAY.dx12
@@ -30,16 +31,17 @@ project "HalfneMikuExev"
    then
       WINDOWSBACKENDSPATH = IMGUIPATH.."/backends/imgui_impl_win32.*"
       GRAPHBACKENDSPATH = IMGUIPATH.."/backends/imgui_impl_dx12.*"
+      GRAPHEXPANDPATH = "vendor/dx12Expand"
       links {"d3d12", "dxgi"}
       defines { "USING_DX12" }
    end
    files { IMGUIPATH.."/imgui*.h", IMGUIPATH.."/imgui*.cpp", 
            WINDOWSBACKENDSPATH, GRAPHBACKENDSPATH ,
-           NANOSVGPATH.."nanosvg.h",
+           NANOSVGPATH.."nanosvg.h",GRAPHEXPANDPATH.."/*",
            SOURCEPATH.."/*",SOURCEPATH.."/*/*"}
 
 
-   includedirs {SOURCEPATH, IMGUIPATH, IMGUIPATH.."/backends", NANOSVGPATH}
+   includedirs {SOURCEPATH, IMGUIPATH, IMGUIPATH.."/backends", NANOSVGPATH, GRAPHEXPANDPATH}
    
    
 
