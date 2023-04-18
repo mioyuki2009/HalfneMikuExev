@@ -4,7 +4,7 @@
 
 bool Texture2DManager::CreateTexture2D(char* filename, int posX, int posY, float scale)
 {
-	
+	return true;
 }
 
 void Texture2DManager::DeleteTexture(const std::shared_ptr<Texture2D>& texture, bool releaseMem)

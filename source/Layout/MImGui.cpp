@@ -109,8 +109,6 @@ void MImGui::DrawDefaultLayout()
 
 void MImGui::Render()
 {
-    GraphImpl::Get();
-
     // Rendering
     ImGui::Render();
     GraphImpl::Get()->RenderImGui(this);

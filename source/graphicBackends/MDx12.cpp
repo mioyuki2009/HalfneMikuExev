@@ -7,7 +7,7 @@
 int const                    NUM_FRAMES_IN_FLIGHT = 3;
 FrameContext                 g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
 UINT                         g_frameIndex = 0;
-
+UINT                         g_rtvDescriptorSize = 0;
 int const                    NUM_BACK_BUFFERS = 3;
 ID3D12Device* g_pd3dDevice = nullptr;
 ID3D12DescriptorHeap* g_pd3dRtvDescHeap = nullptr;
@@ -22,9 +22,6 @@ HANDLE                       g_hSwapChainWaitableObject = nullptr;
 ID3D12Resource* g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
 D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
 
-// Functions
-FrameContext* WaitForNextFrameResources();
-void WaitForLastSubmittedFrame();
 
 MDx12::MDx12(const HWND& hwnd)
 {
@@ -74,6 +71,34 @@ bool MDx12::RegisterImGui(MImGui* pImGui)
 	return true;
 }
 
+void MDx12::Render()
+{
+    FrameContext frameCtx = g_frameContext[g_frameIndex % NUM_FRAMES_IN_FLIGHT];
+    UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
+    frameCtx.CommandAllocator->Reset();
+    g_pd3dCommandList->Reset(frameCtx.CommandAllocator, nullptr);
+    
+    ProcessCommandList();
+
+    ID3D12CommandList* ppCommandLists[] = { g_pd3dCommandList };
+    g_pd3dCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+    g_pd3dCommandList->Close();
+
+    // Present the frame.
+    //g_pSwapChain->Present(1, 0);
+    //WaitForLastSubmittedFrame();
+}
+
+void MDx12::ProcessCommandList()
+{
+    UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
+    for (auto& p : Primitives)
+    {
+        p->ProcessCommandList(g_pd3dCommandList, g_mainRenderTargetResource[backBufferIdx],
+            g_pd3dRtvDescHeap, g_frameIndex, g_rtvDescriptorSize);
+    }
+}
+
 void MDx12::UnRegisterImGui(MImGui* pImGui)
 {
     ImGui_ImplDX12_Shutdown();
@@ -86,31 +111,31 @@ void MDx12::StartNewFrame(MImGui* pImGui)
 
 void MDx12::RenderImGui(MImGui* pImGui)
 {
-    FrameContext* frameCtx = WaitForNextFrameResources();
-    UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
-    frameCtx->CommandAllocator->Reset();
+    //FrameContext frameCtx = g_frameContext[g_frameIndex % NUM_FRAMES_IN_FLIGHT];
+    //UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
+    //frameCtx.CommandAllocator->Reset();
 
-    D3D12_RESOURCE_BARRIER barrier = {};
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    g_pd3dCommandList->Reset(frameCtx->CommandAllocator, nullptr);
-    g_pd3dCommandList->ResourceBarrier(1, &barrier);
+    //D3D12_RESOURCE_BARRIER barrier = {};
+    //barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    //barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    //barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
+    //barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    //barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    //barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    //g_pd3dCommandList->Reset(frameCtx.CommandAllocator, nullptr);
+    //g_pd3dCommandList->ResourceBarrier(1, &barrier);
 
-    // Render Dear ImGui graphics
-    const auto& clear_color = pImGui->GetClearColor();
-    const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-    g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
-    g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
-    g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
+    //// Render Dear ImGui graphics
+    //const auto& clear_color = pImGui->GetClearColor();
+    //const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+    //g_pd3dCommandList->ClearRenderTargetView(g_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, nullptr);
+    //g_pd3dCommandList->OMSetRenderTargets(1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, nullptr);
+    //g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), g_pd3dCommandList);
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    /*barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     g_pd3dCommandList->ResourceBarrier(1, &barrier);
-    g_pd3dCommandList->Close();
+    g_pd3dCommandList->Close();*/
 
     g_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&g_pd3dCommandList);
     
@@ -124,11 +149,7 @@ void MDx12::RenderImGui(MImGui* pImGui)
 
     g_pSwapChain->Present(1, 0); // Present with vsync
     //g_pSwapChain->Present(0, 0); // Present without vsync
-
-    UINT64 fenceValue = g_fenceLastSignaledValue + 1;
-    g_pd3dCommandQueue->Signal(g_fence, fenceValue);
-    g_fenceLastSignaledValue = fenceValue;
-    frameCtx->FenceValue = fenceValue;
+    MDx12::WaitForLastSubmittedFrame();
 }
 
 bool MDx12::CreateDeviceD3D(const HWND& hwnd)
@@ -186,12 +207,12 @@ bool MDx12::CreateDeviceD3D(const HWND& hwnd)
         if (g_pd3dDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pd3dRtvDescHeap)) != S_OK)
             return false;
 
-        SIZE_T rtvDescriptorSize = g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        g_rtvDescriptorSize = g_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = g_pd3dRtvDescHeap->GetCPUDescriptorHandleForHeapStart();
         for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
         {
             g_mainRenderTargetDescriptor[i] = rtvHandle;
-            rtvHandle.ptr += rtvDescriptorSize;
+            rtvHandle.ptr += g_rtvDescriptorSize;
         }
     }
 
@@ -296,28 +317,46 @@ ID3D12Device* MDx12::GetDevice()
     return g_pd3dDevice;
 }
 
-ID3D12GraphicsCommandList* GetCommandList()
+ID3D12GraphicsCommandList* MDx12::GetCommandList()
 {
     return g_pd3dCommandList;
 }
 
-void WaitForLastSubmittedFrame()
+ID3D12CommandQueue* MDx12::GetCommandQueue()
 {
-    FrameContext* frameCtx = &g_frameContext[g_frameIndex % NUM_FRAMES_IN_FLIGHT];
-
-    UINT64 fenceValue = frameCtx->FenceValue;
-    if (fenceValue == 0)
-        return; // No fence was signaled
-
-    frameCtx->FenceValue = 0;
-    if (g_fence->GetCompletedValue() >= fenceValue)
-        return;
-
-    g_fence->SetEventOnCompletion(fenceValue, g_fenceEvent);
-    WaitForSingleObject(g_fenceEvent, INFINITE);
+    return g_pd3dCommandQueue;
 }
 
-FrameContext* WaitForNextFrameResources()
+void MDx12::WaitForLastSubmittedFrame()
+{
+    //FrameContext* frameCtx = &g_frameContext[g_frameIndex % NUM_FRAMES_IN_FLIGHT];
+
+    //UINT64 fenceValue = frameCtx->FenceValue;
+    //if (fenceValue == 0)
+    //    return; // No fence was signaled
+
+    //frameCtx->FenceValue = 0;
+    //if (g_fence->GetCompletedValue() >= fenceValue)
+    //    return;
+
+    //g_fence->SetEventOnCompletion(fenceValue, g_fenceEvent);
+    //WaitForSingleObject(g_fenceEvent, INFINITE);
+    FrameContext* frameCtx = &g_frameContext[g_frameIndex % NUM_FRAMES_IN_FLIGHT];
+    const UINT64 fence = frameCtx->FenceValue;
+    g_pd3dCommandQueue->Signal(g_fence , fence);
+    frameCtx->FenceValue++;
+
+    // Wait until the previous frame is finished.
+    if (g_fence->GetCompletedValue() < fence)
+    {
+        g_fence->SetEventOnCompletion(fence, g_fenceEvent);
+        WaitForSingleObject(g_fenceEvent, INFINITE);
+    }
+
+    g_frameIndex = g_pSwapChain->GetCurrentBackBufferIndex();
+}
+
+FrameContext* MDx12::WaitForNextFrameResources()
 {
     UINT nextFrameIndex = g_frameIndex + 1;
     g_frameIndex = nextFrameIndex;

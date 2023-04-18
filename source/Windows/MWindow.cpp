@@ -11,6 +11,8 @@ void MWindows::Show()
     ::UpdateWindow(hwnd);
 }
 
+#include "GraphicBackends/Texture2DDx12.h"
+MaterialTexture2D* pTest = nullptr;
 bool MWindows::Run()
 {
     const auto& ImGui = MImGui::Get();
@@ -30,8 +32,9 @@ bool MWindows::Run()
         if (done)
             break;
 
-        // Start the Dear ImGui frame
         ImGui->StartNewFrame();
+        GraphImpl::Get()->Render();
+        // Start the Dear ImGui frame
 
         ImGui->DrawDefaultLayout();
 
@@ -60,12 +63,14 @@ void MWindows::Init()
     
     GraphImpl::Get(hwnd);
     MImGui::Get(hwnd);
+    pTest = new MaterialTexture2D;
 }
 
 void MWindows::Release()
 {
     GraphImpl::Get()->Release();
     MImGui::Get()->Release();
+
     if (hwnd)
     {
         ::DestroyWindow(hwnd);

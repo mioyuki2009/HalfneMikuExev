@@ -16,7 +16,7 @@ public:
 	virtual void StartNewFrame(MImGui* pImGui) = 0;
 	virtual void RenderImGui(MImGui* pImGui) = 0;
 	virtual void Release() = 0;
-
+	virtual void Render() = 0;
 public:
 	virtual void Resize(int width, int height) = 0;
 

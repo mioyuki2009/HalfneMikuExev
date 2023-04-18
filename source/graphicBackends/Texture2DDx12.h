@@ -1,14 +1,18 @@
 #pragma once
 #include "Assets/Texture2D.h"
 #include "MDx12.h"
-class MaterialTexture2D
+class MaterialTexture2D : public PrimitiveDX12
 {
-	MaterialTexture2D();
 public:
-	virtual ~MaterialTexture2D();
+	MaterialTexture2D();
+	virtual ~MaterialTexture2D() {};
 
 public:
-	static std::shared_ptr<MaterialTexture2D>& Get();
+	virtual void ProcessCommandList(ID3D12GraphicsCommandList* pCommandList, ID3D12Resource* pRenderTarget, ID3D12DescriptorHeap* pDescriptorHeap,
+		unsigned int frameIndex, unsigned int rtvDescriptorSize) override final;
+
+public:
+	//static std::shared_ptr<MaterialTexture2D>& Get();
 	ID3DBlob* vertexShader = nullptr;
 	ID3DBlob* pixelShader = nullptr;
 };
